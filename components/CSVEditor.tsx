@@ -65,8 +65,8 @@ export function CSVEditor({ initialData, onGoBack, onSaveData }: CSVEditorProps)
     overscan: 10, // Render 10 items offscreen for smooth scroll
   });
 
-  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>, r: number, c: number) => {
-    if (e.key === 'Enter') {
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>, r: number, c: number) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       
       let nextRow = r + 1;
@@ -194,7 +194,7 @@ export function CSVEditor({ initialData, onGoBack, onSaveData }: CSVEditorProps)
              </div>
              {visibleCols.map(colIndex => (
                  <div key={`head-${colIndex}`} className="flex-1 border-r border-slate-200 px-4 py-3 flex items-center min-w-0">
-                    <span className="font-semibold text-sm text-slate-700 truncate select-none">
+                    <span className="font-semibold text-sm text-slate-700 break-words line-clamp-2 select-none">
                         {data[0][colIndex] || `Col ${colIndex + 1}`}
                     </span>
                  </div>
@@ -212,9 +212,10 @@ export function CSVEditor({ initialData, onGoBack, onSaveData }: CSVEditorProps)
               return (
                   <div
                     key={virtualRow.key}
-                    className="absolute top-0 left-0 right-0 flex border-b border-slate-100 bg-white"
+                    data-index={virtualRow.index}
+                    ref={virtualizer.measureElement}
+                    className="absolute top-0 left-0 right-0 flex border-b border-slate-100 bg-white items-stretch"
                     style={{
-                        height: `${virtualRow.size}px`,
                         transform: `translateY(${virtualRow.start + 56}px)` // offset by header height
                     }}
                   >
@@ -252,7 +253,7 @@ interface CellInputProps {
   value: string;
   isFocused: boolean;
   onChange: (val: string) => void;
-  onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  onKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
   onFocus: () => void;
 }
 
@@ -263,7 +264,7 @@ const CellInput = React.memo(function CellInput({
   onKeyDown,
   onFocus,
 }: CellInputProps) {
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   // When focused state changes (e.g. from Keyboard navigation like Enter), 
   // programmatically focus it if it doesn't already have focus.
@@ -275,13 +276,22 @@ const CellInput = React.memo(function CellInput({
 
   return (
     <div className={clsx(
-        "flex-1 border-r border-slate-200 relative min-w-0 transition-colors bg-white",
+        "flex-1 border-r border-slate-200 relative min-w-0 transition-colors bg-white grid",
         isFocused ? "z-10 shadow-[inset_0_0_0_2px_rgba(59,130,246,1)]" : "hover:bg-slate-50"
     )}>
-      <input
+      {/* Invisible spacer div to force height using CSS Grid based on content */}
+      <div 
+        className="px-4 py-3 text-base whitespace-pre-wrap break-words opacity-0 pointer-events-none"
+        style={{ gridArea: '1 / 1 / 2 / 2' }}
+        aria-hidden="true"
+      >
+        {value + ' '}
+      </div>
+      <textarea
         ref={inputRef}
-        type="text"
-        className="absolute inset-0 w-full h-full bg-transparent px-4 py-0 text-base outline-none cursor-text truncate z-20"
+        rows={1}
+        className="w-full h-full bg-transparent px-4 py-3 text-base outline-none cursor-text resize-none overflow-hidden z-20"
+        style={{ gridArea: '1 / 1 / 2 / 2' }}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={onKeyDown}
