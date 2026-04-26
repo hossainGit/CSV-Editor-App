@@ -1,0 +1,6 @@
+{
+  "name": "Tablet CSV Editor",
+  "description": "A fast, tablet-first CSV editor with a focused 3-column view, continuous data entry, and instant autosave. Built for speed and flow, bypassing standard spreadsheet complexity.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
